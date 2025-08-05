@@ -1,0 +1,21 @@
+{
+	"name": "ai-itinerary-worker",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"vitest": "~3.2.0",
+		"wrangler": "^4.27.0"
+	},
+	"dependencies": {
+		"firebase": "^12.0.0",
+		"nanoid": "^5.1.5",
+		"zod": "^4.0.14"
+	}
+}

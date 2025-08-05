@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Itinerary Generator Client</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+  <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-xl w-full max-w-lg space-y-6">
+    <h1 class="text-3xl font-extrabold text-gray-900 text-center">Itinerary Generator</h1>
+    <p class="text-center text-gray-500">
+      Submit a destination and duration to generate your itinerary.
+    </p>
+
+    <div class="space-y-4">
+      <div>
+        <label for="destination" class="block text-sm font-medium text-gray-700">Destination</label>
+        <input type="text" id="destination"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
+          placeholder="e.g., Paris, France" value="Paris, France">
+      </div>
+
+      <div>
+        <label for="durationDays" class="block text-sm font-medium text-gray-700">Duration (Days)</label>
+        <input type="number" id="durationDays"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
+          min="1" value="3">
+      </div>
+
+      <button id="submitBtn"
+        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
+        Generate Itinerary
+      </button>
+    </div>
+
+    <div id="statusMessage" class="mt-4 p-4 rounded-lg bg-gray-100 hidden">
+      <p id="messageText" class="text-sm text-gray-700"></p>
+    </div>
+  </div>
+
+  <script>
+    // Hardcode your Worker URL
+    const WORKER_URL = "https://ai-itinerary-worker.a-m-x-janjan.workers.dev/api"; 
+
+    const destinationInput = document.getElementById('destination');
+    const durationInput = document.getElementById('durationDays');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMessageDiv = document.getElementById('statusMessage');
+    const messageText = document.getElementById('messageText');
+
+    submitBtn.addEventListener('click', async () => {
+      const destination = destinationInput.value;
+      const durationDays = parseInt(durationInput.value, 10);
+
+      if (!destination || isNaN(durationDays) || durationDays <= 0) {
+        showMessage('Please fill out all fields with valid data.', 'error');
+        return;
+      }
+
+      const payload = { destination, durationDays };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Generating...';
+      showMessage('Sending request...', 'info');
+
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (response.status === 202) {
+          showMessage(`Itinerary generation started! Job ID: ${data.jobId}. Check your Firestore database for updates.`, 'success');
+        } else {
+          showMessage(`Error: ${data.error || response.statusText}`, 'error');
+        }
+      } catch (error) {
+        showMessage(`An unexpected error occurred: ${error.message}`, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Generate Itinerary';
+      }
+    });
+
+    function showMessage(text, type) {
+      statusMessageDiv.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'bg-gray-100');
+      statusMessageDiv.classList.add('flex');
+      messageText.textContent = text;
+
+      if (type === 'success') {
+        statusMessageDiv.classList.add('bg-green-100');
+      } else if (type === 'error') {
+        statusMessageDiv.classList.add('bg-red-100');
+      } else {
+        statusMessageDiv.classList.add('bg-gray-100');
+      }
+    }
+  </script>
+</body>
+
+</html>
